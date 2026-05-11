@@ -1,0 +1,34 @@
+name: Test Git integration and git_ignores
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - id: action
+        uses: .
+        with:
+          clamav_enable: "True"
+          clamav_update: "False"
+          yara_enable: "False"
+          git_integrate: "True"
+          git_ignores: |
+            $True
+          git_lfs: "False"
+          git_limit: "1"
+          git_reverse: "False"
+          found_log: "True"
+          statistics_log: "True"
+      - name: Assert finish output
+        env:
+          ACTUAL: ${{ steps.action.outputs.finish }}
+        run: |
+          echo "actual finish: $ACTUAL"
+          if [ "$ACTUAL" != "True" ]; then
+            echo "FAIL: expected finish to be 'True', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,30 @@
+name: Test YARA unofficial assets and custom assets directory
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create YARA custom assets directory
+        run: mkdir -p /tmp/yara-custom-assets
+      - id: action
+        uses: .
+        with:
+          clamav_enable: "False"
+          yara_enable: "True"
+          yara_unofficialassets_use: ""
+          yara_customassets_directory: "/tmp/yara-custom-assets"
+          yara_customassets_use: ".+"
+          found_log: "True"
+          statistics_log: "True"
+      - name: Assert finish output
+        env:
+          ACTUAL: ${{ steps.action.outputs.finish }}
+        run: |
+          echo "actual finish: $ACTUAL"
+          if [ "$ACTUAL" != "True" ]; then
+            echo "FAIL: expected finish to be 'True', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
