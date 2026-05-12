@@ -1,0 +1,37 @@
+name: Test basic ClamAV scan
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          clamav_enable: "True"
+          clamav_update: "True"
+          yara_enable: "False"
+          git_integrate: "False"
+          found_log: "True"
+          statistics_log: "True"
+      - name: Assert finish output is true
+        env:
+          ACTUAL: ${{ steps.action.outputs.finish }}
+        run: |
+          echo "actual finish: $ACTUAL"
+          if [ "$ACTUAL" != "True" ]; then
+            echo "FAIL: expected finish to be 'True', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert found output is false
+        env:
+          ACTUAL: ${{ steps.action.outputs.found }}
+        run: |
+          echo "actual found: $ACTUAL"
+          if [ "$ACTUAL" != "False" ]; then
+            echo "FAIL: expected found to be 'False', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
