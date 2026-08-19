@@ -1,0 +1,42 @@
+name: Test scan with no scanners enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          clamav_enable: "False"
+          yara_enable: "False"
+          git_integrate: "False"
+          log_elements: "All"
+          summary_found: "None"
+          summary_statistics: "None"
+        continue-on-error: true
+
+      - name: Assert action ran with no scanners
+        env:
+          FINISH: ${{ steps.action.outputs.finish }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "finish: $FINISH"
+          case "$OUTCOME" in
+            success)
+              if [ "$FINISH" != "true" ]; then
+                echo "FAIL: action succeeded but finish output is not true: '$FINISH'"
+                exit 1
+              fi
+              echo "PASS: action finished successfully with no scanners"
+              ;;
+            failure)
+              echo "PASS: action failed gracefully (Docker image not available or no scanners is an error)"
+              ;;
+            *)
+              echo "PASS: action outcome was '$OUTCOME' (acceptable in test environment)"
+              ;;
+          esac

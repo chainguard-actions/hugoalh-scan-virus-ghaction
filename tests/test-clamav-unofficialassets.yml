@@ -1,4 +1,4 @@
-name: Test targets input
+name: Test clamav_unofficialassets input
 on:
   workflow_dispatch:
 jobs:
@@ -16,6 +16,7 @@ jobs:
           targets: "${{ github.workspace }}/scan-target"
           clamav_enable: "True"
           clamav_update: "False"
+          clamav_unofficialassets: ""
           yara_enable: "False"
           git_integrate: "False"
           summary_found: "None"

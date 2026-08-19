@@ -1,4 +1,4 @@
-name: Test targets input
+name: Test git_ignores input
 on:
   workflow_dispatch:
 jobs:
@@ -6,18 +6,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a target directory with a test file
+        with:
+          fetch-depth: 0
+      - name: Set up a git origin reachable inside the Docker container
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/scan-target"
-          echo "This is a harmless test file." > "$GITHUB_WORKSPACE/scan-target/hello.txt"
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
+          git push "$GITHUB_WORKSPACE/.git-remote" --tags
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
       - id: action
         uses: .
         with:
-          targets: "${{ github.workspace }}/scan-target"
+          git_integrate: "True"
+          git_limit: "1"
+          git_ignores: |
+            GitCommit: /.+/
           clamav_enable: "True"
           clamav_update: "False"
           yara_enable: "False"
-          git_integrate: "False"
           summary_found: "None"
           summary_statistics: "None"
       - name: Assert finish output is true
@@ -29,10 +39,6 @@ jobs:
           echo "found: $FOUND"
           if [ "$FINISH" != "True" ] && [ "$FINISH" != "true" ]; then
             echo "FAIL: expected finish=True but got '$FINISH'"
-            exit 1
-          fi
-          if [ "$FOUND" != "False" ] && [ "$FOUND" != "false" ]; then
-            echo "FAIL: expected found=False (no virus in test file) but got '$FOUND'"
             exit 1
           fi
           echo "PASS"

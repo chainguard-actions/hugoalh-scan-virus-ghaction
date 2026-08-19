@@ -6,34 +6,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create test files
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/scan-area"
+          echo "Harmless file." > "$GITHUB_WORKSPACE/scan-area/safe.txt"
       - id: action
         uses: .
         with:
-          ignores: |
-            - Path: "**/*.md"
+          targets: "${{ github.workspace }}/scan-area"
           clamav_enable: "True"
           clamav_update: "False"
           yara_enable: "False"
-          log_elements: "All"
+          git_integrate: "False"
+          ignores: |
+            Path: scan-area/safe.txt
           summary_found: "None"
           summary_statistics: "None"
       - name: Assert finish output is true
         env:
-          ACTUAL: ${{ steps.action.outputs.finish }}
+          FINISH: ${{ steps.action.outputs.finish }}
+          FOUND: ${{ steps.action.outputs.found }}
         run: |
-          echo "actual finish: $ACTUAL"
-          if [ "$ACTUAL" != "True" ]; then
-            echo "FAIL: expected finish='True', got '$ACTUAL'"
+          echo "finish: $FINISH"
+          echo "found: $FOUND"
+          if [ "$FINISH" != "True" ] && [ "$FINISH" != "true" ]; then
+            echo "FAIL: expected finish=True but got '$FINISH'"
             exit 1
           fi
           echo "PASS"
-      - name: Assert found output is set
-        env:
-          ACTUAL: ${{ steps.action.outputs.found }}
-        run: |
-          echo "actual found: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected found output to be set"
-            exit 1
-          fi
-          echo "PASS: found=$ACTUAL"

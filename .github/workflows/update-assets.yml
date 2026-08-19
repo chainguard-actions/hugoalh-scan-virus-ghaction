@@ -1,0 +1,43 @@
+name: "Update Assets"
+on:
+  schedule:
+    - cron: "0 0 * * SUN"
+    - cron: "0 12 * * WED"
+  workflow_dispatch:
+defaults:
+  run:
+    shell: "sh"
+concurrency:
+  group: "scan-virus-ghaction-assets-updater"
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  main:
+    name: "Main"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - name: "Checkout Repository"
+        uses: "actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9" # v3.5.3
+        with:
+          ref: "update-assets"
+          fetch-depth: 0
+      - name: "Setup PowerShell Toolkit"
+        uses: "hugoalh-studio/setup-powershell-toolkit-ghaction@eea09045b88556e754e0cca76882055f971f7f9b" # v1.2.3
+      - name: "Config Git"
+        run: |
+          git --no-pager config --global "user.name" "github-actions"
+          git --no-pager config --global "user.email" "github-actions@users.noreply.github.com"
+      - name: "Invoke Updater"
+        id: "updater"
+        run: |
+          pwsh -NonInteractive ./assets/_updater.ps1
+      - name: "Push Git Commit"
+        if: "${{github.event_name == 'workflow_dispatch' || steps.updater.outputs.should_push == 'true'}}"
+        env:
+          COMMIT_TIMESTAMP: "${{steps.updater.outputs.timestamp}}"
+        run: |
+          git --no-pager add --all
+          git --no-pager commit --message="Update assets on ${COMMIT_TIMESTAMP}"
+          git --no-pager push

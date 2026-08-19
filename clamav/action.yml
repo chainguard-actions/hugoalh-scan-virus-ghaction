@@ -61,7 +61,7 @@ outputs:
     description: "{Boolean} Whether there has element which found virus"
 runs:
   using: "docker"
-  image: "docker://ghcr.io/hugoalh/scan-virus-ghaction@sha256:565e3e20e186ac487e1ab1ab8906a1856d98885eb5460c0ecedee2dfd646a20b" # 0.15.1-clamav
+  image: "docker://ghcr.io/hugoalh/scan-virus-ghaction:0.15.1-clamav@sha256:565e3e20e186ac487e1ab1ab8906a1856d98885eb5460c0ecedee2dfd646a20b"
 branding:
   icon: "shield"
   color: "red"

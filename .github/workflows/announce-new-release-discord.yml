@@ -1,0 +1,19 @@
+name: "Announce New Release - Discord"
+on:
+  release:
+    types:
+      - "published"
+permissions: {}
+jobs:
+  main:
+    name: "Main"
+    uses: "hugoalh/hugoalh/.github/workflows/announce-new-release-discord.yml@32df3c5c61200e0e6cb7cb143175c5ab18746102" # main
+    with:
+      name: "Scan Virus (GitHub Action)"
+      color: "#2088FF"
+      thumbnail: "https://i.imgur.com/6qM8z4w.png"
+      releases: |
+        **- GitHub (& Changelog):** ${{github.event.release.html_url}}
+        **- GitHub Marketplace:** https://github.com/marketplace/actions/scan-virus
+    secrets:
+      DISCORD_WEBHOOK: "${{secrets.DISCORD_HXHS_PROJECTNEWRELEASEANNOUNCER_WEBHOOK}}"

@@ -1,0 +1,58 @@
+name: "Scan Virus"
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+    types:
+      - "edited"
+      - "opened"
+      - "reopened"
+      - "synchronize"
+  workflow_dispatch:
+    inputs:
+      git_integrate:
+        type: "choice"
+        description: "{Boolean} Whether to integrate with Git to perform scan by the commits."
+        required: false
+        default: "False"
+        options:
+          - "False"
+          - "True"
+      git_limit:
+        type: "string"
+        description: "{UInt} Limit on how many Git commits will scan."
+        required: false
+        default: "0"
+      git_reverse:
+        type: "choice"
+        description: "{Boolean} Whether to reverse the scan order of the Git commits."
+        required: false
+        default: "False"
+        options:
+          - "False"
+          - "True"
+permissions: {}
+jobs:
+  main:
+    name: "Main"
+    uses: "hugoalh/hugoalh/.github/workflows/scan-virus.yml@32df3c5c61200e0e6cb7cb143175c5ab18746102" # main
+    with:
+      git_integrate: "${{github.event.inputs.git_integrate || 'False'}}"
+      git_limit: "${{github.event.inputs.git_limit || '0'}}"
+      git_reverse: "${{github.event.inputs.git_reverse || 'False'}}"
+      ignores: |-
+        - Path: "\\.[chln]db$"
+          Symbol: ".+"
+        - Path: "\\.hsb$"
+          Symbol: ".+"
+        - Path: "\\.ign2?$"
+          Symbol: ".+"
+        - Path: "\\.yara?$"
+          Symbol: ".+"
+        - Path: "^\\.git\\/"
+          Symbol: ".+"
+        - Path: "^node_modules\\/"
+          Symbol: ".+"

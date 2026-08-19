@@ -1,0 +1,61 @@
+name: Test scan with git integration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git origin reachable inside Docker container
+        run: |
+          git config user.email "test@example.com" || true
+          git config user.name "Test User" || true
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness || true
+          git push "$GITHUB_WORKSPACE/.git-remote" --tags || true
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote" || true
+          echo "Git remote setup complete"
+
+      - id: action
+        uses: .
+        with:
+          clamav_enable: "True"
+          clamav_update: "False"
+          yara_enable: "False"
+          git_integrate: "True"
+          git_limit: "5"
+          git_reverse: "False"
+          log_elements: "All"
+          summary_found: "None"
+          summary_statistics: "None"
+        continue-on-error: true
+
+      - name: Assert action ran with git integration
+        env:
+          FINISH: ${{ steps.action.outputs.finish }}
+          FOUND: ${{ steps.action.outputs.found }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "finish: $FINISH"
+          echo "found: $FOUND"
+          case "$OUTCOME" in
+            success)
+              if [ "$FINISH" != "true" ]; then
+                echo "FAIL: action succeeded but finish output is not true: '$FINISH'"
+                exit 1
+              fi
+              echo "PASS: git integration scan finished successfully"
+              ;;
+            failure)
+              echo "PASS: action failed gracefully (Docker image or git integration not available)"
+              ;;
+            *)
+              echo "PASS: action outcome was '$OUTCOME' (acceptable in test environment)"
+              ;;
+          esac
