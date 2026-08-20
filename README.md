@@ -10,7 +10,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 |---------|-----|-----------------|
 | v0.15.1 | [`v0.15.1`](https://github.com/chainguard-actions/hugoalh-scan-virus-ghaction/tree/v0.15.1) | [`524cf03`](https://github.com/hugoalh/scan-virus-ghaction/commit/524cf03c0633a38628cdd3140b33c49c3bf0baf4) |
 | v0.20.0 | [`v0.20.0`](https://github.com/chainguard-actions/hugoalh-scan-virus-ghaction/tree/v0.20.0) | — |
-| v0.20.1 | [`v0.20.1`](https://github.com/chainguard-actions/hugoalh-scan-virus-ghaction/tree/v0.20.1) | — |
+| v0.20.1 | [`v0.20.1`](https://github.com/chainguard-actions/hugoalh-scan-virus-ghaction/tree/v0.20.1) | [`99c81e8`](https://github.com/hugoalh/scan-virus-ghaction/commit/99c81e8991ad1074a14e5f22a21bce9be035e14e) |
 
 ## Privacy
 
