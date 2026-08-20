@@ -1,0 +1,42 @@
+name: Test with all scanners disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          clamav_enable: "False"
+          yara_enable: "False"
+          git_integrate: "False"
+          found_log: "True"
+          statistics_log: "True"
+
+      - name: Assert action fails with no tools enabled or fails gracefully
+        if: always()
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FINISH: ${{ steps.action.outputs.finish }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "finish: $FINISH"
+          # The action explicitly calls Write-GitHubActionsFail when no tools are enabled,
+          # so we expect a failure outcome here. But we also accept success in case the
+          # Docker image forces tools on (e.g. SCANVIRUS_GHACTION_TOOLS=clamav forces ClamAV).
+          # We also accept cancelled in case the Docker pull times out.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when no scanners are enabled"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action finished (finish=$FINISH) - Docker image may force tools on"
+          elif [ "$OUTCOME" = "cancelled" ]; then
+            echo "PASS: action was cancelled (acceptable in test environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

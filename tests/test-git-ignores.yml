@@ -1,4 +1,4 @@
-name: Test ClamAV with custom assets directory
+name: Test ClamAV scan with git integration and git ignores
 on:
   workflow_dispatch:
 jobs:
@@ -7,11 +7,20 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
-      - name: Create custom ClamAV assets directory
+      - name: Set up git origin reachable inside Docker container
+        continue-on-error: true
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/custom-clamav-assets"
-          echo "# empty placeholder" > "$GITHUB_WORKSPACE/custom-clamav-assets/README.txt"
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
+          git push "$GITHUB_WORKSPACE/.git-remote" --tags
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
 
       - id: action
         uses: .
@@ -19,10 +28,10 @@ jobs:
         with:
           clamav_enable: "True"
           clamav_update: "False"
-          clamav_customassets_directory: "/github/workspace/custom-clamav-assets"
-          clamav_customassets_use: ".+"
           yara_enable: "False"
-          git_integrate: "False"
+          git_integrate: "True"
+          git_limit: "2"
+          git_ignores: "$True"
           found_log: "True"
           statistics_log: "True"
 
@@ -37,7 +46,7 @@ jobs:
           echo "finish: $FINISH"
           echo "found: $FOUND"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action finished with custom assets directory (found=$FOUND)"
+            echo "PASS: action finished with git ignores (found=$FOUND)"
           elif [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "cancelled" ]; then
             echo "PASS: action did not succeed (outcome=$OUTCOME), acceptable in test environment"
           else

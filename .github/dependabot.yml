@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://json.schemastore.org/dependabot-2.0.json
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "00:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "Platform/Docker"
+      - "Status/Pending 🔵"
+      - "Type/Dependency 📦"
+    open-pull-requests-limit: 100
+    pull-request-branch-name:
+      separator: "/"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "00:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "Platform/GitHubActions"
+      - "Status/Pending 🔵"
+      - "Type/Dependency 📦"
+    open-pull-requests-limit: 100
+    pull-request-branch-name:
+      separator: "/"
+    rebase-strategy: "disabled"
