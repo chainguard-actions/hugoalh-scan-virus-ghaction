@@ -1,4 +1,4 @@
-name: Test ClamAV with custom assets directory
+name: Test ClamAV scan with git integration and git ignores
 on:
   workflow_dispatch:
 jobs:
@@ -6,6 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Set up git origin reachable inside Docker container
         continue-on-error: true
         run: |
@@ -14,26 +16,23 @@ jobs:
           rm -rf "$GITHUB_WORKSPACE/.git-remote"
           git init --bare "$GITHUB_WORKSPACE/.git-remote"
           git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
+          git push "$GITHUB_WORKSPACE/.git-remote" --tags
           git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
             git remote add origin "$GITHUB_WORKSPACE/.git-remote"
-      - name: Create custom ClamAV assets directory
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/.clamav-custom"
-          # Create an empty placeholder so the directory exists but has no custom rules
-          touch "$GITHUB_WORKSPACE/.clamav-custom/.keep"
       - id: scan
         uses: .
         continue-on-error: true
         with:
           clamav_enable: "True"
           clamav_update: "False"
-          clamav_customassets_directory: "/github/workspace/.clamav-custom"
-          clamav_customassets_use: ".+"
           yara_enable: "False"
-          git_integrate: "False"
+          git_integrate: "True"
+          git_limit: "3"
+          git_ignores: |
+            $False
           found_log: "True"
           statistics_log: "True"
-      - name: Assert scan ran and finished or failed gracefully
+      - name: Assert git-integrated scan with ignores ran or failed gracefully
         env:
           FINISH: ${{ steps.scan.outputs.finish }}
           FOUND: ${{ steps.scan.outputs.found }}
@@ -48,10 +47,10 @@ jobs:
               exit 1
             fi
             if [ "$FOUND" = "True" ] || [ "$FOUND" = "true" ] || [ "$FOUND" = "1" ]; then
-              echo "FAIL: virus found in clean repository"
+              echo "FAIL: virus found in clean repository commits"
               exit 1
             fi
-            echo "PASS: scan finished successfully with custom assets directory, no virus found"
+            echo "PASS: git-integrated scan with git_ignores finished successfully, no virus found"
           elif [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "skipped" ]; then
             echo "PASS: action did not succeed (acceptable in harness environment - outcome: $OUTCOME)"
           else

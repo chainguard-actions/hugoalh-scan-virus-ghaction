@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Announce New Release - Discord"
+on:
+  release:
+    types:
+      - "published"
+permissions: {}
+jobs:
+  main:
+    name: "Main"
+    uses: "hugoalh/hugoalh/.github/workflows/reusable-announce-new-release-discord.yml@d4341938b228ddc93b22c91c6fca2413d607046b # main"
+    with:
+      payload: |
+        embeds:
+          - title: "Scan Virus (GitHub Action)"
+            description: |
+              > ${{github.event.repository.description}}
+
+              Version ${{github.event.release.name}} (${{github.event.release.tag_name}}) just released!
+            timestamp: "${{github.event.release.published_at}}"
+            color: "#2088FF"
+            thumbnail:
+              url: "https://i.imgur.com/6qM8z4w.png"
+            author:
+              name: "${{github.event.release.author.login}}"
+              url: "${{github.event.release.author.html_url}}"
+              icon_url: "${{github.event.release.author.avatar_url}}"
+            fields:
+              - name: "GitHub - Release & Changelog"
+                value: "${{github.event.release.html_url}}"
+                inline: false
+              - name: "GitHub - Repository"
+                value: "${{github.event.repository.html_url}}"
+                inline: false
+              - name: "GitHub Marketplace"
+                value: "https://github.com/marketplace/actions/scan-virus"
+                inline: false
+    secrets:
+      DISCORD_WEBHOOK: "${{secrets.DISCORD_HXHS_PROJECTNEWRELEASEANNOUNCER_WEBHOOK}}"

@@ -60,7 +60,7 @@ outputs:
     description: "{Boolean} Whether there has element which found virus."
 runs:
   using: "docker"
-  image: "docker://ghcr.io/hugoalh/scan-virus-ghaction@sha256:1a7a2ad2b6cc58a76e0740d679e3ca82cdb82f42a6f9c7b94bc7184e06e15fbb" # 0.20.0-yara
+  image: "docker://ghcr.io/hugoalh/scan-virus-ghaction:0.20.0-yara@sha256:1a7a2ad2b6cc58a76e0740d679e3ca82cdb82f42a6f9c7b94bc7184e06e15fbb"
 branding:
   icon: "shield"
   color: "red"

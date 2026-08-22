@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Publish Docker Container - GitHub Packages"
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: "string"
+        description: "{string} Tag."
+        required: true
+      latest:
+        type: "choice"
+        description: "{boolean} Latest."
+        required: false
+        default: "false"
+        options:
+          - "false"
+          - "true"
+env:
+  REGISTRY: "ghcr.io"
+  IMAGE_NAME: "${{github.event.repository.full_name}}"
+permissions:
+  contents: read
+  packages: write
+jobs:
+  main:
+    name: "Main"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Repository"
+        uses: "actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1"
+      - name: "Sign In To Registry ${{env.REGISTRY}}"
+        uses: "docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0"
+        with:
+          registry: "${{env.REGISTRY}}"
+          username: "${{github.actor}}"
+          password: "${{github.token}}"
+      - name: "Generate Docker Metadata - All"
+        id: "docker-meta-all"
+        uses: "docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0"
+        with:
+          images: "${{env.REGISTRY}}/${{env.IMAGE_NAME}}"
+          tags: |-
+            type=raw,enable=${{inputs.tag != ''}},value=${{inputs.tag}}
+            type=raw,enable=${{inputs.latest == 'true'}},value=latest
+            type=semver,enable=${{inputs.tag == ''}},pattern={{version}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}
+          labels: |-
+            org.opencontainers.image.authors=${{github.event.repository.owner.login}}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=Scan Virus (GitHub Action) Image
+            org.opencontainers.image.description=A Docker image for Scan Virus (GitHub Action) to scan virus.
+      - name: "Generate Docker Metadata - ClamAV"
+        id: "docker-meta-clamav"
+        uses: "docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0"
+        with:
+          images: "${{env.REGISTRY}}/${{env.IMAGE_NAME}}"
+          tags: |-
+            type=raw,enable=${{inputs.tag != ''}},value=${{inputs.tag}}
+            type=raw,enable=${{inputs.latest == 'true'}},value=latest
+            type=semver,enable=${{inputs.tag == ''}},pattern={{version}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}
+          flavor: |-
+            latest=false
+            suffix=-clamav,onlatest=true
+          labels: |-
+            org.opencontainers.image.authors=${{github.event.repository.owner.login}}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=Scan Virus (GitHub Action) Image (ClamAV)
+            org.opencontainers.image.description=A Docker image for Scan Virus (GitHub Action) to scan virus.
+      - name: "Generate Docker Metadata - YARA"
+        id: "docker-meta-yara"
+        uses: "docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0"
+        with:
+          images: "${{env.REGISTRY}}/${{env.IMAGE_NAME}}"
+          tags: |-
+            type=raw,enable=${{inputs.tag != ''}},value=${{inputs.tag}}
+            type=raw,enable=${{inputs.latest == 'true'}},value=latest
+            type=semver,enable=${{inputs.tag == ''}},pattern={{version}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}.{{minor}}
+            type=semver,enable=${{inputs.tag == ''}},pattern={{major}}
+          flavor: |-
+            latest=false
+            suffix=-yara,onlatest=true
+          labels: |-
+            org.opencontainers.image.authors=${{github.event.repository.owner.login}}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=Scan Virus (GitHub Action) Image (YARA)
+            org.opencontainers.image.description=A Docker image for Scan Virus (GitHub Action) to scan Virus.
+      - name: "Build & Push Docker Image - All"
+        uses: "docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0"
+        with:
+          context: "./"
+          file: "all.Dockerfile"
+          labels: "${{steps.docker-meta-all.outputs.labels}}"
+          platforms: |-
+            linux/amd64
+          pull: "true"
+          push: "true"
+          tags: "${{steps.docker-meta-all.outputs.tags}}"
+      - name: "Build & Push Docker Image - ClamAV"
+        uses: "docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0"
+        with:
+          context: "./"
+          file: "clamav.Dockerfile"
+          labels: "${{steps.docker-meta-clamav.outputs.labels}}"
+          platforms: |-
+            linux/amd64
+          pull: "true"
+          push: "true"
+          tags: "${{steps.docker-meta-clamav.outputs.tags}}"
+      - name: "Build & Push Docker Image - YARA"
+        uses: "docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0"
+        with:
+          context: "./"
+          file: "yara.Dockerfile"
+          labels: "${{steps.docker-meta-yara.outputs.labels}}"
+          platforms: |-
+            linux/amd64
+          pull: "true"
+          push: "true"
+          tags: "${{steps.docker-meta-yara.outputs.tags}}"
+      - name: "List Docker Image"
+        run: |
+          docker image ls --all --digests --no-trunc

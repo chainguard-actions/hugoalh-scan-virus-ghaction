@@ -1,4 +1,4 @@
-name: Test ClamAV with custom assets directory
+name: Test YARA scan with unofficial and custom assets
 on:
   workflow_dispatch:
 jobs:
@@ -16,24 +16,31 @@ jobs:
           git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
           git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
             git remote add origin "$GITHUB_WORKSPACE/.git-remote"
-      - name: Create custom ClamAV assets directory
+      - name: Create custom YARA assets directory
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.clamav-custom"
-          # Create an empty placeholder so the directory exists but has no custom rules
-          touch "$GITHUB_WORKSPACE/.clamav-custom/.keep"
+          mkdir -p "$GITHUB_WORKSPACE/.yara-custom"
+          # Create a minimal YARA rule file for testing
+          cat > "$GITHUB_WORKSPACE/.yara-custom/test.yar" << 'EOF'
+          rule TestRule {
+            meta:
+              description = "Test rule that never matches"
+            condition:
+              false
+          }
+          EOF
       - id: scan
         uses: .
         continue-on-error: true
         with:
-          clamav_enable: "True"
-          clamav_update: "False"
-          clamav_customassets_directory: "/github/workspace/.clamav-custom"
-          clamav_customassets_use: ".+"
-          yara_enable: "False"
+          clamav_enable: "False"
+          yara_enable: "True"
+          yara_unofficialassets_use: ""
+          yara_customassets_directory: "/github/workspace/.yara-custom"
+          yara_customassets_use: ".+"
           git_integrate: "False"
           found_log: "True"
           statistics_log: "True"
-      - name: Assert scan ran and finished or failed gracefully
+      - name: Assert YARA scan ran and finished or failed gracefully
         env:
           FINISH: ${{ steps.scan.outputs.finish }}
           FOUND: ${{ steps.scan.outputs.found }}
@@ -51,7 +58,7 @@ jobs:
               echo "FAIL: virus found in clean repository"
               exit 1
             fi
-            echo "PASS: scan finished successfully with custom assets directory, no virus found"
+            echo "PASS: YARA scan finished successfully with unofficial and custom assets, no virus found"
           elif [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "skipped" ]; then
             echo "PASS: action did not succeed (acceptable in harness environment - outcome: $OUTCOME)"
           else
