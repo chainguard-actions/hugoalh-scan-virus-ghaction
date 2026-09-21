@@ -1,7 +1,0 @@
-{
-  "owner": "hugoalh",
-  "name": "scan-virus-ghaction",
-  "visibility": "public",
-  "description": "Scan virus (including malicious file and malware) in the GitHub Action workspace.",
-  "block_publish": false
-}
