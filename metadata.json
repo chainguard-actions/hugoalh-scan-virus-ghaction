@@ -1,7 +1,0 @@
-{
-  "owner": "hugoalh",
-  "name": "scan-virus-ghaction",
-  "visibility": "internal",
-  "description": "Scan virus (including malicious file and malware).",
-  "block_publish": false
-}
